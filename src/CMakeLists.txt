@@ -203,12 +203,6 @@ if (MPI_FOUND)
   target_link_libraries(dbcsr PUBLIC MPI::MPI_Fortran)
 endif ()
 
-target_link_libraries(
-  dbcsr
-  PRIVATE $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_C>
-          $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_CXX>
-          $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_Fortran>)
-
 # todo, make this a bit better with opencl.
 if (USE_ACCEL MATCHES "cuda|hip")
   add_subdirectory(acc/libsmm_acc)
@@ -218,27 +212,28 @@ if (USE_ACCEL MATCHES "opencl")
   add_subdirectory(acc/opencl/smm)
 endif ()
 
-if (USE_ACCEL)
-  target_compile_definitions(
-    dbcsr
-    PRIVATE __DBCSR_ACC
-            $<$<STREQUAL:${USE_ACCEL},cuda>:__CUDA>
-            $<$<STREQUAL:${USE_ACCEL},opencl>:__OPENCL>
-            $<$<STREQUAL:${USE_ACCEL},cuda>:ARCH_NUMBER=${ACC_ARCH_NUMBER}>
-            $<$<STREQUAL:${USE_ACCEL},hip>:__HIP>
-            $<$<STREQUAL:${USE_ACCEL},hip>:ARCH_NUMBER=${ACC_ARCH_NUMBER}>
-            $<$<BOOL:${WITH_CUDA_PROFILING}>:__CUDA_PROFILING>)
+target_compile_definitions(
+  dbcsr
+  PRIVATE $<$<BOOL:${USE_ACCEL}>:__DBCSR_ACC>
+          $<$<STREQUAL:${USE_ACCEL},cuda>:__CUDA>
+          $<$<STREQUAL:${USE_ACCEL},opencl>:__OPENCL>
+          $<$<STREQUAL:${USE_ACCEL},cuda>:ARCH_NUMBER=${ACC_ARCH_NUMBER}>
+          $<$<STREQUAL:${USE_ACCEL},hip>:__HIP>
+          $<$<STREQUAL:${USE_ACCEL},hip>:ARCH_NUMBER=${ACC_ARCH_NUMBER}>
+          $<$<BOOL:${WITH_CUDA_PROFILING}>:__CUDA_PROFILING>)
 
-  target_link_libraries(
-    dbcsr
-    PRIVATE $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::cudart>
-            $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::cublas>
-            $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::nvToolsExt>
-            $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::nvrtc>
-            $<$<STREQUAL:${USE_ACCEL},hip>:roc::hipblas>
-            $<$<STREQUAL:${USE_ACCEL},hip>:hip::host>
-            $<$<STREQUAL:${USE_ACCEL},opencl>:OpenCL::OpenCL>)
-endif ()
+target_link_libraries(
+  dbcsr
+  PRIVATE $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::cudart>
+          $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::cublas>
+          $<$<STREQUAL:${USE_ACCEL},cuda>:CUDA::nvrtc>
+          $<$<BOOL<${WITH_CUDA_PROFILING}>:CUDA::nvToolsExt>
+          $<$<STREQUAL:${USE_ACCEL},hip>:roc::hipblas>
+          $<$<STREQUAL:${USE_ACCEL},hip>:hip::host>
+          $<$<STREQUAL:${USE_ACCEL},opencl>:OpenCL::OpenCL>
+          $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_C>
+          $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_CXX>
+          $<$<BOOL:${USE_OPENMP}>:OpenMP::OpenMP_Fortran>)
 
 # =================================================================================================
 # DBCSR's C API
